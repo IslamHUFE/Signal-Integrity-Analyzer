@@ -18,15 +18,31 @@ The project brings several commonly used signal-integrity views together: an NRZ
 
 ## Screenshots
 
-Screenshots are maintained in the [images/](images/) directory.
+The following screenshots show the analyzer's main visualization panels. All images are stored in the [`images/`](images/) directory.
 
-<!-- Add the actual image filenames here when embedding screenshots. For example:
-![NRZ eye-density diagram](images/eye-density.png)
-![Impedance versus frequency](images/impedance.png)
-![Smith chart](images/smith-chart.png)
-![Loss versus frequency](images/loss.png)
-![S-parameters](images/s-parameters.png)
--->
+### NRZ eye diagram and jitter
+
+The eye-density view displays the reconstructed NRZ signal, with eye-height, eye-width, and RMS crossing-spread metrics.
+
+![NRZ eye-density diagram and jitter metrics](images/1.png)
+
+### Input impedance and Smith chart
+
+The impedance panel plots the input impedance versus frequency and shows the S11 response on a Smith chart.
+
+![Input impedance versus frequency and S11 Smith chart](images/2.png)
+
+### Forward insertion loss
+
+The loss panel shows forward insertion loss across the frequency sweep, including the Nyquist-frequency marker.
+
+![Forward insertion loss versus frequency](images/3.png)
+
+### Two-port S-parameters
+
+The S-parameter panel displays magnitude and unwrapped phase for S11, S21, S12, and S22.
+
+![Two-port S-parameter magnitude and phase plots](images/4.png)
 
 ## Input data
 
