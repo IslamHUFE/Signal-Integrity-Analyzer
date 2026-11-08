@@ -430,6 +430,18 @@ Keep the following points in mind when interpreting results:
 - **COM-like is not standards COM.** The displayed COM-like budget is a simplified application-specific metric and must not be presented as a standards-compliant COM result.
 - **Validate before design sign-off.** Independently verify critical results with measurement, a trusted simulator, or an established compliance workflow before using them for production or safety-critical decisions.
 
+## Disclaimer
+
+Moon SI Analyzer is provided for educational, research, and engineering evaluation purposes. It is an analytical aid, not a certified design, verification, compliance, or measurement system.
+
+- **No guarantee of accuracy:** Results depend on the quality, completeness, calibration, port mapping, reference impedance, frequency range, and other properties of the input data, as well as the assumptions and settings selected by the user. Numerical results may contain errors or may not represent the behavior of a physical device or channel.
+- **Model-based estimates:** Eye diagrams are synthetically reconstructed from channel data; BER and bathtub results are estimates based on configured noise and jitter assumptions; and the COM-like metric is an application-specific approximation, not a standards-compliant COM result. These outputs are not substitutes for measured results or validated compliance analysis.
+- **Independent verification required:** The user is solely responsible for reviewing and independently validating all outputs before relying on them. Verify critical results using appropriate measurements, qualified engineering review, trusted simulation tools, and applicable standards and compliance procedures.
+- **No design or safety assurance:** Do not rely on this software as the sole basis for production release, regulatory approval, safety-critical systems, or any decision where an incorrect result could cause damage, injury, or loss.
+- **Use at your own risk:** The authors and contributors are not responsible for losses, damages, or claims arising from the use of, or inability to use, this software, to the maximum extent permitted by applicable law.
+
+The software is distributed **"AS IS"**, without warranties or conditions of any kind, express or implied. See the [MIT License](LICENSE) for the applicable license terms. This disclaimer does not limit any rights or liabilities that cannot legally be excluded under applicable law.
+
 ## Contributing
 
 Contributions, bug reports, feature requests, and documentation improvements are welcome.
