@@ -34,7 +34,7 @@ from matplotlib.path import Path as MplPath
 from scipy.ndimage import gaussian_filter, gaussian_filter1d
 from scipy.special import erfc
 
-APP_TITLE = "Moon SI Analyzere"
+APP_TITLE = "Moon SI Analyzer"
 
 # ----------------------------------------------------------------------------
 # Dark palette

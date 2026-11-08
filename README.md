@@ -188,7 +188,7 @@ The screenshots below are grouped by the four folders in <code>images/screenshot
 <table>
   <tr>
     <td valign="top" width="50%">
-      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Advanced/TDR%20%5C%20Z-profile.png" alt="TDR and impedance profile view" width="100%">
+      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Advanced/TDR%20-%20Z-profile.png" alt="TDR and impedance profile view" width="100%">
       <br><strong>TDR / Z-profile</strong><br>
       <sub>Time-domain reflection and transmission responses, impedance profile, and channel impulse-response information.</sub>
     </td>
@@ -237,7 +237,7 @@ The screenshots below are grouped by the four folders in <code>images/screenshot
 <table>
   <tr>
     <td valign="top" width="50%">
-      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Quality%20and%20EQ/Pulse%20%5C%20Bathtub.png" alt="Pulse response and bathtub analysis" width="100%">
+      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Quality%20and%20EQ/Pulse%20-%20Bathtub.png" alt="Pulse response and bathtub analysis" width="100%">
       <br><strong>Pulse / Bathtub</strong><br>
       <sub>Equalized pulse response, horizontal and vertical bathtub curves, and a logarithmic BER contour derived from the configured model assumptions.</sub>
     </td>
@@ -249,7 +249,7 @@ The screenshots below are grouped by the four folders in <code>images/screenshot
   </tr>
   <tr>
     <td valign="top" width="50%">
-      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Quality%20and%20EQ/ILD%20%5C%20COM%20%5C%20Causality.png" alt="ILD COM and causality view" width="100%">
+      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Quality%20and%20EQ/ILD%20-%20COM%20-%20Causality.png" alt="ILD COM and causality view" width="100%">
       <br><strong>ILD / COM / Causality</strong><br>
       <sub>Insertion-loss deviation, impulse-response causality inspection, and the application's simplified COM-like channel-quality estimate.</sub>
     </td>
@@ -271,14 +271,14 @@ The screenshots below are grouped by the four folders in <code>images/screenshot
       <sub>Queue multiple Touchstone files or a folder, calculate channel metrics, optionally add eye estimates, and export the results to CSV.</sub>
     </td>
     <td valign="top" width="50%">
-      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Tools/Cascade%20%5C%20De-embed.png" alt="Cascade and de-embed view" width="100%">
+      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Tools/Cascade%20-%20De-embed.png" alt="Cascade and de-embed view" width="100%">
       <br><strong>Cascade / De-embed</strong><br>
       <sub>Combine two-port networks, remove a fixture from either side of the channel, or reverse the port orientation.</sub>
     </td>
   </tr>
   <tr>
     <td valign="top" width="50%">
-      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Tools/Smith%2B%20%5C%20Matching.png" alt="Smith chart and matching view" width="100%">
+      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Tools/Smith%2B%20-%20Matching.png" alt="Smith chart and matching view" width="100%">
       <br><strong>Smith+ / Matching</strong><br>
       <sub>Source and load stability circles, available-gain circles, and noise circles when Touchstone noise data is available.</sub>
     </td>
@@ -290,7 +290,7 @@ The screenshots below are grouped by the four folders in <code>images/screenshot
   </tr>
   <tr>
     <td valign="top" width="50%">
-      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Tools/Vector%20fit%20%5C%20SPICE.png" alt="Vector fitting and SPICE export view" width="100%">
+      <img src="https://raw.githubusercontent.com/IslamHUFE/Signal-Integrity-Analyzer/main/images/screenshots/Tools/Vector%20fit%20-%20SPICE.png" alt="Vector fitting and SPICE export view" width="100%">
       <br><strong>Vector fit / SPICE</strong><br>
       <sub>Fit a rational pole-residue model to the network response, inspect fit error and passivity, and export a SPICE subcircuit.</sub>
     </td>
