@@ -1,5 +1,5 @@
 
-name: Build Executables
+name: Build Moon SI Analyzer
 
 on:
   push:
@@ -38,22 +38,24 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
 
-      
       - name: Build with PyInstaller
         shell: bash
         run: |
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             ICON="images/logo.ico"
+            DATA_SEPARATOR=";"
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
             ICON="images/logo.icns"
+            DATA_SEPARATOR=":"
           else
             ICON="images/logo.png"
+            DATA_SEPARATOR=":"
           fi
 
           python -m PyInstaller \
             --clean \
             --noconfirm \
-            --onefile \
+            --onedir \
             --noconsole \
             --collect-all matplotlib \
             --collect-all scipy \
@@ -63,12 +65,21 @@ jobs:
             --hidden-import matplotlib.backends.backend_tkagg \
             --name "Moon SI Analyzer" \
             --icon "$ICON" \
+            --add-data "images/logo.png${DATA_SEPARATOR}images" \
             si_analyzer.py
+
+      - name: Package Linux executable
+        if: runner.os == 'Linux'
+        run: |
+          tar -czf Moon-SI-Analyzer-Linux.tar.gz \
+            -C dist "Moon SI Analyzer"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
         with:
           name: Moon-SI-Analyzer-${{ matrix.os }}
-          path: dist/*
+          path: |
+            dist/
+            Moon-SI-Analyzer-Linux.tar.gz
           if-no-files-found: error
           retention-days: 30
