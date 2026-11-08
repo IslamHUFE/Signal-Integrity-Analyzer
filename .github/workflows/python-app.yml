@@ -38,6 +38,7 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
 
+      
       - name: Build with PyInstaller
         shell: bash
         run: |
@@ -57,6 +58,8 @@ jobs:
             --collect-all matplotlib \
             --collect-all scipy \
             --collect-all skrf \
+            --collect-all PIL \
+            --hidden-import PIL._tkinter_finder \
             --hidden-import matplotlib.backends.backend_tkagg \
             --name "Moon SI Analyzer" \
             --icon "$ICON" \
