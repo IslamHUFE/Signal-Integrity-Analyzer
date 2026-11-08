@@ -1,85 +1,191 @@
 
-name: Build Moon SI Analyzer
+name: Build and Release Moon SI Analyzer
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+    tags:
+      - 'v*'
+
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+
+  # ==========================================
+  # BUILD FOR WINDOWS, LINUX AND MACOS
+  # ==========================================
+
   build:
+
     name: Build on ${{ matrix.os }}
+
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
+
       matrix:
         os:
-          - ubuntu-22.04
           - windows-latest
+          - ubuntu-22.04
           - macos-latest
 
     steps:
-      - name: Checkout code
+
+      # Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v7
 
+      # Install Python
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
 
+      # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller
 
+      # Build executable
       - name: Build with PyInstaller
         shell: bash
         run: |
+
+          # Platform-specific settings
           if [[ "$RUNNER_OS" == "Windows" ]]; then
-            ICON="images/logo.ico"
-            DATA_SEPARATOR=";"
+              DATA_SEPARATOR=";"
+              BUILD_MODE="onefile"
+
           elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            ICON="images/logo.icns"
-            DATA_SEPARATOR=":"
+              DATA_SEPARATOR=":"
+              BUILD_MODE="onedir"
+
           else
-            ICON="images/logo.png"
-            DATA_SEPARATOR=":"
+              DATA_SEPARATOR=":"
+              BUILD_MODE="onefile"
           fi
 
-          python -m PyInstaller \
-            --clean \
-            --noconfirm \
-            --onedir \
-            --noconsole \
-            --collect-all matplotlib \
-            --collect-all scipy \
-            --collect-all skrf \
-            --collect-all PIL \
-            --hidden-import PIL._tkinter_finder \
-            --hidden-import matplotlib.backends.backend_tkagg \
-            --name "Moon SI Analyzer" \
-            --icon "$ICON" \
-            --add-data "images/logo.png${DATA_SEPARATOR}images" \
-            si_analyzer.py
+          # Common PyInstaller arguments
+          COMMON_ARGS=(
+              --clean
+              --noconfirm
+              --collect-all matplotlib
+              --collect-all scipy
+              --collect-all skrf
+              --collect-all PIL
+              --hidden-import PIL._tkinter_finder
+              --hidden-import matplotlib.backends.backend_tkagg
+              --name "Moon SI Analyzer"
+              --add-data "images/logo.png${DATA_SEPARATOR}images"
+          )
 
-      - name: Package Linux executable
+          # Build for Windows
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+
+              python -m PyInstaller \
+                  "${COMMON_ARGS[@]}" \
+                  --onefile \
+                  --noconsole \
+                  --icon images/logo.ico \
+                  si_analyzer.py
+
+          # Build for macOS
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+
+              python -m PyInstaller \
+                  "${COMMON_ARGS[@]}" \
+                  --onedir \
+                  --windowed \
+                  --icon images/logo.icns \
+                  si_analyzer.py
+
+          # Build for Linux
+          else
+
+              python -m PyInstaller \
+                  "${COMMON_ARGS[@]}" \
+                  --onefile \
+                  si_analyzer.py
+
+          fi
+
+      # Package Windows executable
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "dist/Moon SI Analyzer.exe" `
+            -DestinationPath "Moon-SI-Analyzer-Windows.zip"
+
+      # Package Linux executable
+      - name: Package Linux
         if: runner.os == 'Linux'
         run: |
-          tar -czf Moon-SI-Analyzer-Linux.tar.gz \
+          chmod +x "dist/Moon SI Analyzer"
+
+          tar -czf Moon-SI-Analyzer-Linux.tar.gz `
             -C dist "Moon SI Analyzer"
 
-      - name: Upload Artifacts
+      # Package macOS application
+      - name: Package macOS
+        if: runner.os == 'macOS'
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "dist/Moon SI Analyzer.app" \
+            "Moon-SI-Analyzer-macOS.zip"
+
+      # Upload build artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
           name: Moon-SI-Analyzer-${{ matrix.os }}
           path: |
-            dist/
+            Moon-SI-Analyzer-Windows.zip
             Moon-SI-Analyzer-Linux.tar.gz
+            Moon-SI-Analyzer-macOS.zip
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 7
+
+
+  # ==========================================
+  # CREATE GITHUB RELEASE
+  # ==========================================
+
+  release:
+
+    name: Publish GitHub Release
+
+    needs: build
+
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+
+      # Download all platform builds
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      # Publish GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: release-assets/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
