@@ -29,7 +29,7 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller --onefile --noconsole main.py
+        pyinstaller --onefile --noconsole si_analyzer.py
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
