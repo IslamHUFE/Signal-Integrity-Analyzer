@@ -132,7 +132,7 @@ jobs:
         run: |
           chmod +x "dist/Moon SI Analyzer"
 
-          tar -czf Moon-SI-Analyzer-Linux.tar.gz `
+          tar -czf Moon-SI-Analyzer-Linux.tar.gz \
             -C dist "Moon SI Analyzer"
 
       # Package macOS application
