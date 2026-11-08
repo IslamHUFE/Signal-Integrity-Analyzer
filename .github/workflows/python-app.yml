@@ -1,38 +1,71 @@
+
 name: Build Executables
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-latest, macos-latest]   
+        os:
+          - ubuntu-22.04
+          - windows-latest
+          - macos-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
 
-    - name: Build with PyInstaller
-      run: |
-        pyinstaller --onefile --noconsole si_analyzer.py
+      - name: Build with PyInstaller
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            ICON="images/logo.ico"
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            ICON="images/logo.icns"
+          else
+            ICON="images/logo.png"
+          fi
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: executable-${{ matrix.os }}
-        path: dist/
+          python -m PyInstaller \
+            --clean \
+            --noconfirm \
+            --onefile \
+            --noconsole \
+            --collect-all matplotlib \
+            --collect-all scipy \
+            --collect-all skrf \
+            --hidden-import matplotlib.backends.backend_tkagg \
+            --name "Moon SI Analyzer" \
+            --icon "$ICON" \
+            si_analyzer.py
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Moon-SI-Analyzer-${{ matrix.os }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
