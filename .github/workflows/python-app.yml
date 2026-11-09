@@ -1,4 +1,3 @@
-
 name: Build and Release Moon SI Analyzer
 
 on:
@@ -7,6 +6,8 @@ on:
       - main
     tags:
       - 'v*'
+    paths-ignore:
+      - 'Documentation/**'
 
   workflow_dispatch:
 
@@ -42,10 +43,10 @@ jobs:
 
       # Install Python
       - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-          cache: pip
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.11'
+        cache: pip
 
       # Install dependencies
       - name: Install dependencies
