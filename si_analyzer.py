@@ -26,11 +26,14 @@ import matplotlib as mpl
 import numpy as np
 import skrf as rf
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.collections import LineCollection
+from matplotlib.collections import Collection, LineCollection
 from matplotlib.colors import LinearSegmentedColormap, Normalize, PowerNorm
 from matplotlib.figure import Figure
-from matplotlib.patches import Polygon
+from matplotlib.patches import Patch, Polygon
 from matplotlib.path import Path as MplPath
+from matplotlib.lines import Line2D
+from matplotlib.text import Text
+from contextlib import contextmanager
 from scipy.ndimage import gaussian_filter, gaussian_filter1d
 from scipy.special import erfc
 
@@ -39,21 +42,21 @@ APP_TITLE = "Moon SI Analyzer"
 # ----------------------------------------------------------------------------
 # Dark palette
 # ----------------------------------------------------------------------------
-BG = "#0b0f19"
-PANEL = "#111827"
-CARD = "#151c2c"
-CARD_HI = "#1c2540"
-BORDER = "#263149"
-FG = "#e6eaf2"
-MUTED = "#8b97ad"
+BG = "#000000"
+PANEL = "#0a0a0a"
+CARD = "#111111"
+CARD_HI = "#1c1c1c"
+BORDER = "#2a2a2a"
+FG = "#ececec"
+MUTED = "#9a9a9a"
 ACCENT = "#4cc2ff"
 ACCENT2 = "#ff9f5a"
 GREEN = "#7ee787"
 PURPLE = "#d2a8ff"
 RED = "#ff6b6b"
-PLOT_BG = "#0d1320"
-AX_BG = "#0a0e17"
-GRID = "#243049"
+PLOT_BG = "#000000"
+AX_BG = "#000000"
+GRID = "#2e2e2e"
 
 # Smith-chart trace: blue at the lowest frequency -> red at the highest.
 FREQ_CMAP = LinearSegmentedColormap.from_list("freq_blue_red", ["#2f7bff", "#ff3b3b"])
@@ -76,7 +79,90 @@ mpl.rcParams.update({
     "legend.labelcolor": FG,
     "savefig.facecolor": PLOT_BG,
     "lines.linewidth": 1.6,
+    "savefig.dpi": 300,
 })
+
+# ----------------------------------------------------------------------------
+# High-quality export helpers (white "print" theme for reports and papers)
+# ----------------------------------------------------------------------------
+EXPORT_FORMATS = {"PNG": "png", "PDF (vector)": "pdf", "SVG (vector)": "svg", "EPS (vector)": "eps", "TIFF": "tiff"}
+EXPORT_DPIS = ["300", "600", "1200"]
+EXPORT_THEMES = ["White (for reports & papers)", "Black (as shown)"]
+EXPORT_SIZES = {"As shown": None, "12 × 7.5 in": (12.0, 7.5), "16 × 10 in": (16.0, 10.0)}
+
+LIGHT_MAP = {
+    ACCENT: "#0b6fb8", ACCENT2: "#d9650b", GREEN: "#1b8a2f", PURPLE: "#7a3fc4", RED: "#c62828",
+    "#ffd866": "#a67c00", "#78dce8": "#0f8fa3", "#ff8ab4": "#c2185b",
+}
+
+
+def _to_light(c: Any) -> Any:
+    """Dark-theme colour -> print-friendly colour (neutrals inverted, bright colours darkened)."""
+    try:
+        r, g, b, a = mpl.colors.to_rgba(c)
+    except (ValueError, TypeError):
+        return c
+    hx = mpl.colors.to_hex((r, g, b)).lower()
+    if hx in LIGHT_MAP:
+        return (*mpl.colors.to_rgb(LIGHT_MAP[hx]), a)
+    if max(r, g, b) - min(r, g, b) < 0.08:
+        v = 1.0 - (r + g + b) / 3.0
+        return (v, v, v, a)
+    if 0.299 * r + 0.587 * g + 0.114 * b > 0.55:
+        return (r * 0.65, g * 0.65, b * 0.65, a)
+    return (r, g, b, a)
+
+
+@contextmanager
+def print_theme(fig: Figure):
+    """Temporarily recolour a figure for white paper, restoring every colour afterwards."""
+    undo: list[tuple[Callable[..., Any], Any]] = []
+
+    def swap(obj: Any, getter: str, setter: str) -> None:
+        try:
+            old = getattr(obj, getter)()
+            set_fn = getattr(obj, setter)
+            set_fn(_to_light(old))
+            undo.append((set_fn, old))
+        except Exception:
+            pass
+
+    for a in fig.findobj():
+        if isinstance(a, Text):
+            swap(a, "get_color", "set_color")
+            bb = a.get_bbox_patch()
+            if bb is not None:
+                swap(bb, "get_edgecolor", "set_edgecolor")
+                swap(bb, "get_facecolor", "set_facecolor")
+        elif isinstance(a, Line2D):
+            swap(a, "get_color", "set_color")
+            if a.get_marker() not in (None, "None", "none", "", " "):
+                swap(a, "get_markerfacecolor", "set_markerfacecolor")
+                swap(a, "get_markeredgecolor", "set_markeredgecolor")
+        elif isinstance(a, Patch):
+            swap(a, "get_edgecolor", "set_edgecolor")
+            swap(a, "get_facecolor", "set_facecolor")
+        elif isinstance(a, Collection) and a.get_array() is None:
+            for g, s in (("get_edgecolor", "set_edgecolor"), ("get_facecolor", "set_facecolor")):
+                try:
+                    old = getattr(a, g)()
+                    set_fn = getattr(a, s)
+                    set_fn([_to_light(c) for c in old])
+                    undo.append((set_fn, old))
+                except Exception:
+                    pass
+    for ax in fig.axes:
+        ax.tick_params(axis="both", which="both", colors="#333333")
+    try:
+        yield
+    finally:
+        for ax in fig.axes:
+            ax.tick_params(axis="both", which="both", colors=MUTED)
+        for set_fn, old in reversed(undo):
+            try:
+                set_fn(old)
+            except Exception:
+                pass
 
 
 @dataclass
@@ -1839,7 +1925,7 @@ class ExtraTabs:
         self.t_nb.add(exp, text="Export / Session")
         bar = ttk.Frame(exp, style="Card.TFrame", padding=(16, 14))
         bar.pack(fill="x", pady=(0, 6))
-        for text, cmd in (("Figures → PNG folder", self._export_figures), ("S-parameters → CSV", self._export_csv),
+        for text, cmd in (("Export all figures (HQ)…", self._export_figures), ("S-parameters → CSV", self._export_csv),
                           ("HTML report", self._export_html), ("Save session", self._save_session),
                           ("Load session", self._load_session)):
             ttk.Button(bar, text=text, command=cmd).pack(side="left", padx=(0, 10))
@@ -2440,18 +2526,75 @@ class ExtraTabs:
                  ("fig_s", "fig_loss", "fig_z", "fig_eye")]
         return base + extra
 
+    def _save_hq(self, fig: Figure, path: Path, fmt: str, dpi: int, light: bool,
+                 size: tuple[float, float] | None) -> None:
+        old_size = fig.get_size_inches().copy()
+        if size is not None:
+            fig.set_size_inches(*size)
+        kw: dict[str, Any] = dict(dpi=dpi, bbox_inches="tight", pad_inches=0.1,
+                                  facecolor="white" if light else PLOT_BG)
+        if fmt == "tiff":
+            kw["pil_kwargs"] = {"compression": "tiff_lzw"}
+        try:
+            with mpl.rc_context({"pdf.fonttype": 42, "ps.fonttype": 42}):
+                if light:
+                    with print_theme(fig):
+                        fig.savefig(path, **kw)
+                else:
+                    fig.savefig(path, **kw)
+        finally:
+            fig.set_size_inches(*old_size)
+            fig.canvas.draw_idle()
+
     def _export_figures(self) -> None:
-        folder = filedialog.askdirectory(title="Choose a folder for the PNG files")
+        win = tk.Toplevel(self)
+        win.title("Export all figures")
+        win.configure(bg=BG)
+        win.transient(self)
+        fmt_v, dpi_v = tk.StringVar(value="PNG"), tk.StringVar(value="600")
+        theme_v, size_v = tk.StringVar(value=EXPORT_THEMES[0]), tk.StringVar(value="As shown")
+        frm = ttk.Frame(win, padding=16)
+        frm.pack(fill="both")
+        rows = (("Format", fmt_v, list(EXPORT_FORMATS)), ("Resolution (DPI)", dpi_v, EXPORT_DPIS),
+                ("Theme", theme_v, EXPORT_THEMES), ("Figure size", size_v, list(EXPORT_SIZES)))
+        for i, (label, var, vals) in enumerate(rows):
+            ttk.Label(frm, text=label).grid(row=i, column=0, sticky="w", pady=5, padx=(0, 14))
+            ttk.Combobox(frm, textvariable=var, values=vals, width=28, state="readonly").grid(row=i, column=1, pady=5)
+        ttk.Label(frm, text="PDF / SVG are vector formats (sharp at any zoom) and are the best choice for papers. "
+                            "DPI applies to PNG / TIFF. 1200 DPI at large sizes needs a lot of RAM.",
+                  style="Muted.TLabel", wraplength=400).grid(row=4, column=0, columnspan=2, sticky="w", pady=(8, 0))
+        go = {"ok": False}
+
+        def accept() -> None:
+            go["ok"] = True
+            win.destroy()
+
+        row = ttk.Frame(win, padding=(16, 0, 16, 16))
+        row.pack(fill="x")
+        ttk.Button(row, text="Choose folder & export", style="Accent.TButton", command=accept).pack(side="right")
+        ttk.Button(row, text="Cancel", command=win.destroy).pack(side="right", padx=8)
+        win.grab_set()
+        self.wait_window(win)
+        if not go["ok"]:
+            return
+        folder = filedialog.askdirectory(title="Choose a folder for the figures")
         if not folder:
             return
-        count = 0
+        ext = EXPORT_FORMATS[fmt_v.get()]
+        dpi, light, size = int(dpi_v.get()), theme_v.get() == EXPORT_THEMES[0], EXPORT_SIZES[size_v.get()]
+        count, failed = 0, []
         for name, fig in self._all_figures():
+            if not fig.axes or all(not ax.axison for ax in fig.axes):
+                continue  # skip empty placeholder tabs
+            self.export_status_var.set(f"Exporting {name}…")
+            self.update_idletasks()
             try:
-                fig.savefig(Path(folder) / f"si_{name}.png", dpi=150)
+                self._save_hq(fig, Path(folder) / f"si_{name}.{ext}", ext, dpi, light, size)
                 count += 1
-            except Exception:
-                pass
-        self.export_status_var.set(f"Saved {count} figure(s) to {folder}")
+            except Exception as exc:
+                failed.append(f"{name} ({str(exc)[:40]})")
+        msg = f"Saved {count} figure(s) as {ext.upper()} ({'vector' if ext in ('pdf', 'svg', 'eps') else f'{dpi} DPI'}) to {folder}"
+        self.export_status_var.set(msg + (f" — failed: {', '.join(failed)}" if failed else ""))
 
     def _export_csv(self) -> None:
         if self.channel is None:
@@ -2640,6 +2783,7 @@ class UltimateTabs:
         fm.add_separator()
         fm.add_command(label="Save session…", command=self._save_session)
         fm.add_command(label="Load session…", command=self._load_session)
+        fm.add_command(label="Export all figures (HQ)…", command=self._export_figures)
         fm.add_separator()
         fm.add_command(label="Quit", command=self.destroy)
         bar.add_cascade(label="File", menu=fm)
